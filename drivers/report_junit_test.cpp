@@ -64,6 +64,7 @@ static const char* const default_metadata =
     "allowed_platforms is empty\n"
     "description is empty\n"
     "has_cleanup = false\n"
+    "has_setup = false\n"
     "is_exclusive = false\n"
     "required_configs is empty\n"
     "required_disk_space = 0\n"
@@ -81,6 +82,7 @@ static const char* const overriden_metadata =
     "allowed_platforms is empty\n"
     "description = Textual description\n"
     "has_cleanup = false\n"
+    "has_setup = false\n"
     "is_exclusive = false\n"
     "required_configs is empty\n"
     "required_disk_space = 0\n"
@@ -200,6 +202,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         .add_allowed_platform("platform1")
         .set_description("This is a test")
         .set_has_cleanup(true)
+        .set_has_setup(true)
         .set_is_exclusive(true)
         .add_required_config("config1")
         .set_required_disk_space(units::bytes(456))
@@ -216,6 +219,7 @@ ATF_TEST_CASE_BODY(junit_metadata__overrides)
         + "allowed_platforms = platform1\n"
         + "description = This is a test\n"
         + "has_cleanup = true\n"
+        + "has_setup = true\n"
         + "is_exclusive = true\n"
         + "required_configs = config1\n"
         + "required_disk_space = 456\n"

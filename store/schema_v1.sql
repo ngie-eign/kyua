@@ -231,6 +231,10 @@ CREATE TABLE atf_test_cases (
     -- cleanup routine or not.
     has_cleanup TEXT,
 
+    -- Either 'true' or 'false', indicating whether the test case has a
+    -- setup routine or not.
+    has_setup TEXT,
+
     -- The timeout for the test case in microseconds.
     timeout INTEGER,
 

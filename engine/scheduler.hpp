@@ -113,6 +113,23 @@ public:
         const utils::fs::path& stdout_path,
         const utils::fs::path& stderr_path) const = 0;
 
+    /// Executes a test setup routine of the test program.
+    ///
+    /// This method is intended to be called within a subprocess and is expected
+    /// to terminate execution either by exec(2)ing the test program or by
+    /// exiting with a failure.
+    ///
+    /// \param test_program The test program to execute.
+    /// \param test_case_name Name of the test case to invoke.
+    /// \param vars User-provided variables to pass to the test program.
+    /// \param control_directory Directory where the interface may place control
+    ///     files.
+    virtual void exec_setup(const model::test_program& test_program,
+                            const std::string& test_case_name,
+                            const utils::config::properties_map& vars,
+                            const utils::fs::path& control_directory)
+        const UTILS_NORETURN;
+
     /// Executes a test case of the test program.
     ///
     /// This method is intended to be called within a subprocess and is expected
@@ -263,6 +280,7 @@ public:
 
 extern utils::datetime::delta cleanup_timeout;
 extern utils::datetime::delta list_timeout;
+extern utils::datetime::delta setup_timeout;
 
 
 void ensure_valid_interface(const std::string&);

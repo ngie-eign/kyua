@@ -64,6 +64,7 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
     model::properties_map properties;
     properties["descr"] = "Some text";
     properties["has.cleanup"] = "true";
+    properties["has.setup"] = "true";
     properties["require.arch"] = "i386 x86_64";
     properties["require.config"] = "var1 var2 var3";
     properties["require.files"] = "/file1 /dir/file2";
@@ -93,6 +94,7 @@ ATF_TEST_CASE_BODY(parse_atf_metadata__override_all)
         .add_required_program(fs::path("svn"))
         .set_description("Some text")
         .set_has_cleanup(true)
+        .set_has_setup(true)
         .set_required_memory(units::bytes::parse("1m"))
         .set_required_user("root")
         .set_timeout(datetime::delta(123, 0))

@@ -52,6 +52,7 @@ metadata:many_properties
 metadata:no_properties
 metadata:one_property
 metadata:with_cleanup
+metadata:with_setup
 simple_all_pass:pass
 simple_all_pass:skip
 subdir/simple_some_fail:fail
@@ -427,6 +428,8 @@ subdir/metadata:one_property (integration-suite-2)
     description = Does nothing but has one metadata property
 subdir/metadata:with_cleanup (integration-suite-2)
     has_cleanup = true
+subdir/metadata:with_setup (integration-suite-2)
+    has_setup = true
     timeout = 250
 EOF
     atf_check -s exit:0 -o file:expout -e empty kyua list -v

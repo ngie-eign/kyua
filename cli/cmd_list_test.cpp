@@ -84,6 +84,7 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
         .add_custom("my-property", "value")
         .set_description("Some description")
         .set_has_cleanup(true)
+        .set_has_setup(true)
         .build();
     const model::test_program test_program = model::test_program_builder(
         "mock", fs::path("hello/world"), fs::path("root"), "the-suite")
@@ -93,11 +94,12 @@ ATF_TEST_CASE_BODY(list_test_case__verbose__some_properties)
 
     cmdline::ui_mock ui;
     cli::detail::list_test_case(&ui, true, test_program, "my_name");
-    ATF_REQUIRE_EQ(4, ui.out_log().size());
+    ATF_REQUIRE_EQ(5, ui.out_log().size());
     ATF_REQUIRE_EQ("hello/world:my_name (the-suite)", ui.out_log()[0]);
     ATF_REQUIRE_EQ("    custom.my-property = value", ui.out_log()[1]);
     ATF_REQUIRE_EQ("    description = Some description", ui.out_log()[2]);
     ATF_REQUIRE_EQ("    has_cleanup = true", ui.out_log()[3]);
+    ATF_REQUIRE_EQ("    has_setup = true", ui.out_log()[4]);
     ATF_REQUIRE(ui.err_log().empty());
 }
 

@@ -53,6 +53,7 @@ ATF_TEST_CASE_BODY(defaults)
     ATF_REQUIRE(md.custom().empty());
     ATF_REQUIRE(md.description().empty());
     ATF_REQUIRE(!md.has_cleanup());
+    ATF_REQUIRE(!md.has_setup());
     ATF_REQUIRE(!md.is_exclusive());
     ATF_REQUIRE(md.required_configs().empty());
     ATF_REQUIRE_EQ(units::bytes(0), md.required_disk_space());
@@ -205,6 +206,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
         .set_custom(custom)
         .set_description(description)
         .set_has_cleanup(true)
+        .set_has_setup(true)
         .set_is_exclusive(true)
         .set_required_configs(configs)
         .set_required_disk_space(disk_space)
@@ -220,6 +222,7 @@ ATF_TEST_CASE_BODY(override_all_with_setters)
     ATF_REQUIRE(custom == md.custom());
     ATF_REQUIRE_EQ(description, md.description());
     ATF_REQUIRE(md.has_cleanup());
+    ATF_REQUIRE(md.has_setup());
     ATF_REQUIRE(md.is_exclusive());
     ATF_REQUIRE(configs == md.required_configs());
     ATF_REQUIRE_EQ(disk_space, md.required_disk_space());
@@ -273,6 +276,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
         .set_string("custom.user-defined", "the-value")
         .set_string("description", "Another long text")
         .set_string("has_cleanup", "true")
+        .set_string("has_setup", "true")
         .set_string("is_exclusive", "true")
         .set_string("required_configs", "config-var")
         .set_string("required_disk_space", "16G")
@@ -288,6 +292,7 @@ ATF_TEST_CASE_BODY(override_all_with_set_string)
     ATF_REQUIRE(custom == md.custom());
     ATF_REQUIRE_EQ(description, md.description());
     ATF_REQUIRE(md.has_cleanup());
+    ATF_REQUIRE(md.has_setup());
     ATF_REQUIRE(md.is_exclusive());
     ATF_REQUIRE(configs == md.required_configs());
     ATF_REQUIRE_EQ(disk_space, md.required_disk_space());
@@ -316,6 +321,7 @@ ATF_TEST_CASE_BODY(to_properties)
     props["custom.foo"] = "bar";
     props["description"] = "";
     props["has_cleanup"] = "false";
+    props["has_setup"] = "false";
     props["is_exclusive"] = "false";
     props["required_configs"] = "";
     props["required_disk_space"] = "0";
@@ -406,7 +412,8 @@ ATF_TEST_CASE_BODY(output__defaults)
     std::ostringstream str;
     str << model::metadata_builder().build();
     ATF_REQUIRE_EQ("metadata{allowed_architectures='', allowed_platforms='', "
-                   "description='', has_cleanup='false', is_exclusive='false', "
+                   "description='', has_cleanup='false', has_setup='false', "
+                   "is_exclusive='false', "
                    "required_configs='', "
                    "required_disk_space='0', required_files='', "
                    "required_memory='0', "
@@ -428,7 +435,8 @@ ATF_TEST_CASE_BODY(output__some_values)
         .build();
     ATF_REQUIRE_EQ(
         "metadata{allowed_architectures='abc', allowed_platforms='', "
-        "description='', has_cleanup='false', is_exclusive='true', "
+        "description='', has_cleanup='false', has_setup='false', "
+        "is_exclusive='true', "
         "required_configs='', "
         "required_disk_space='0', required_files='bar foo', "
         "required_memory='1.00K', "

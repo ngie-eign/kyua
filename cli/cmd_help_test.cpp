@@ -122,7 +122,7 @@ public:
 /// \param [out] commands A mapping that is updated to contain the commands to
 ///     use for testing.
 static void
-setup(cmdline::commands_map< cli::cli_command >& commands)
+setup_cmdline_testcase(cmdline::commands_map< cli::cli_command >& commands)
 {
     cmdline::init("progname");
 
@@ -148,7 +148,7 @@ global_test(const cmdline::options_vector& general_options,
             cmdline::ui_mock& ui)
 {
     cmdline::commands_map< cli::cli_command > mock_commands;
-    setup(mock_commands);
+    setup_cmdline_testcase(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
@@ -226,7 +226,7 @@ ATF_TEST_CASE_BODY(subcommand__simple)
     cmdline::options_vector general_options;
 
     cmdline::commands_map< cli::cli_command > mock_commands;
-    setup(mock_commands);
+    setup_cmdline_testcase(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
@@ -258,7 +258,7 @@ ATF_TEST_CASE_BODY(subcommand__complex)
     general_options.push_back(&global_c);
 
     cmdline::commands_map< cli::cli_command > mock_commands;
-    setup(mock_commands);
+    setup_cmdline_testcase(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
@@ -299,7 +299,7 @@ ATF_TEST_CASE_BODY(subcommand__unknown)
     cmdline::options_vector general_options;
 
     cmdline::commands_map< cli::cli_command > mock_commands;
-    setup(mock_commands);
+    setup_cmdline_testcase(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");
@@ -320,7 +320,7 @@ ATF_TEST_CASE_BODY(invalid_args)
     cmdline::options_vector general_options;
 
     cmdline::commands_map< cli::cli_command > mock_commands;
-    setup(mock_commands);
+    setup_cmdline_testcase(mock_commands);
 
     cmdline::args_vector args;
     args.push_back("help");

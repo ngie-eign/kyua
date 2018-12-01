@@ -248,6 +248,7 @@ init_tree(config::tree& tree)
     tree.define_dynamic("custom");
     tree.define< config::string_node >("description");
     tree.define< config::bool_node >("has_cleanup");
+    tree.define< config::bool_node >("has_setup");
     tree.define< config::bool_node >("is_exclusive");
     tree.define< config::strings_set_node >("required_configs");
     tree.define< bytes_node >("required_disk_space");
@@ -271,6 +272,7 @@ set_defaults(config::tree& tree)
                                          model::strings_set());
     tree.set< config::string_node >("description", "");
     tree.set< config::bool_node >("has_cleanup", false);
+    tree.set< config::bool_node >("has_setup", false);
     tree.set< config::bool_node >("is_exclusive", false);
     tree.set< config::strings_set_node >("required_configs",
                                          model::strings_set());
@@ -474,6 +476,20 @@ model::metadata::has_cleanup(void) const
         return _pimpl->props.lookup< config::bool_node >("has_cleanup");
     } else {
         return get_defaults().lookup< config::bool_node >("has_cleanup");
+    }
+}
+
+
+/// Returns whether the test has a setup part or not.
+///
+/// \return True if there is a setup part; false otherwise.
+bool
+model::metadata::has_setup(void) const
+{
+    if (_pimpl->props.is_set("has_setup")) {
+        return _pimpl->props.lookup< config::bool_node >("has_setup");
+    } else {
+        return get_defaults().lookup< config::bool_node >("has_setup");
     }
 }
 
@@ -904,6 +920,20 @@ model::metadata_builder::set_has_cleanup(const bool cleanup)
     return *this;
 }
 
+
+/// Sets whether the test has a setup part or not.
+///
+/// \param setup True if the test has a setup part; false otherwise.
+///
+/// \return A reference to this builder.
+///
+/// \throw model::error If the value is invalid.
+model::metadata_builder&
+model::metadata_builder::set_has_setup(const bool setup)
+{
+    set< config::bool_node >(_pimpl->props, "has_setup", setup);
+    return *this;
+}
 
 /// Sets whether the test is exclusive or not.
 ///

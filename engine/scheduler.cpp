@@ -87,6 +87,13 @@ using utils::optional;
 datetime::delta scheduler::cleanup_timeout(60, 0);
 
 
+/// Timeout for the test case setup operation.
+///
+/// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
+/// this setting as part of the user_config.
+datetime::delta scheduler::setup_timeout(60, 0);
+
+
 /// Timeout for the test case listing operation.
 ///
 /// TODO(jmmv): This is here only for testing purposes.  Maybe we should expose
@@ -161,11 +168,12 @@ append_files_listing(const fs::path& dir_path, const fs::path& output_file)
 /// Maintenance data held while a test is being executed.
 ///
 /// This data structure exists from the moment when a test is executed via
-/// scheduler::spawn_test() or scheduler::impl::spawn_cleanup() to when it is
-/// cleaned up with result_handle::cleanup().
+/// scheduler::spawn_test() or scheduler::impl::spawn_cleanup() or
+/// scheduler::impl::spawn_setup() to when it is cleaned up with
+/// result_handle::cleanup().
 ///
-/// This is a base data type intended to be extended for the test and cleanup
-/// cases so that each contains only the relevant data.
+/// This is a base data type intended to be extended for the test, cleanup,
+/// and setup cases so that each contains only the relevant data.
 struct exec_data : utils::noncopyable {
     /// Test program data for this test case.
     const model::test_program_ptr test_program;
@@ -196,8 +204,8 @@ struct test_exec_data : public exec_data {
     const std::shared_ptr< scheduler::interface > interface;
 
     /// User configuration passed to the execution of the test.  We need this
-    /// here to recover it later when chaining the execution of a cleanup
-    /// routine (if any).
+    /// here to recover it later when chaining the execution of a cleanup and/or
+    /// setup routine (if any).
     const config::tree user_config;
 
     /// Whether this test case still needs to have its cleanup routine executed.
@@ -205,6 +213,9 @@ struct test_exec_data : public exec_data {
     /// This is set externally when the cleanup routine is actually invoked to
     /// denote that no further attempts shall be made at cleaning this up.
     bool needs_cleanup;
+
+    /// Similar to `needs_cleanup`, but with a setup routine.
+    bool needs_setup;
 
     /// The exit_handle for this test once it has completed.
     ///
@@ -228,6 +239,7 @@ struct test_exec_data : public exec_data {
     {
         const model::test_case& test_case = test_program->find(test_case_name);
         needs_cleanup = test_case.get_metadata().has_cleanup();
+        needs_setup = test_case.get_metadata().has_setup();
     }
 };
 
@@ -520,6 +532,20 @@ scheduler::interface::exec_cleanup(
     // provide a default implementation that does nothing.
     UNREACHABLE_MSG("exec_cleanup not implemented for an interface that "
                     "supports standalone cleanup routines");
+}
+
+
+void
+scheduler::interface::exec_setup(
+    const model::test_program& UTILS_UNUSED_PARAM(test_program),
+    const std::string& UTILS_UNUSED_PARAM(test_case_name),
+    const utils::config::properties_map& UTILS_UNUSED_PARAM(vars),
+    const utils::fs::path& UTILS_UNUSED_PARAM(control_directory)) const
+{
+    // Most test interfaces do not support standalone setup routines so
+    // provide a default implementation that does nothing.
+    UNREACHABLE_MSG("exec_setup not implemented for an interface that "
+                    "supports standalone setup routines");
 }
 
 

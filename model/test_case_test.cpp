@@ -201,6 +201,7 @@ ATF_TEST_CASE_BODY(test_case__output)
         "test_case{name='the-name', "
         "metadata=metadata{allowed_architectures='', allowed_platforms='foo', "
         "custom.bar='baz', description='', has_cleanup='false', "
+        "has_setup='false', "
         "is_exclusive='false', "
         "required_configs='', required_disk_space='0', required_files='', "
         "required_memory='0', "
