@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 The Kyua Authors.
+# Copyright 2019 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,44 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set -e -x
+install_package() {
+    brew install "${@}"
+}
 
-BINDIR="$(dirname "$0")"
+install_deps() {
+    local packages=
 
-case "${TRAVIS_OS_NAME}" in
-linux)
-    . "${BINDIR}/travis-build-linux.sh"
-    ;;
-osx)
-    . "${BINDIR}/travis-build-osx.sh"
-esac
+    packages="${packages} atf"
+    packages="${packages} autoconf"
+    packages="${packages} automake"
+    packages="${packages} gdb"
+    packages="${packages} lutok"
+    packages="${packages} pkg-config"
+    packages="${packages} sqlite3"
+
+    case "${TRAVIS_COMPILER}" in
+    clang)
+        clang_version=6
+        packages="${packages} llvm@${clang_version}"
+        ;;
+    gcc)
+        gcc_version=7
+        packages="${packages} gcc@${gcc_version}"
+        ;;
+    esac
+
+    brew upgrade
+    install_package ${packages}
+}
 
 do_apidocs() {
-    run_autoreconf || return 1
-    ./configure --with-doxygen || return 1
-    make check-api-docs
+    install_package doxygen
+}
+
+do_distcheck() {
+    :
 }
 
 do_style() {
-    run_autoreconf || return 1
-    mkdir build
-    cd build
-    ../configure || return 1
-    make check-style
+    :
 }
-
-main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
-        exit 1
-    fi
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
-}
-
-main "${@}"

@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 The Kyua Authors.
+# Copyright 2019 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,20 +29,62 @@
 
 set -e -x
 
-BINDIR="$(dirname "$0")"
-
-case "${TRAVIS_OS_NAME}" in
-linux)
-    . "${BINDIR}/travis-build-linux.sh"
-    ;;
-osx)
-    . "${BINDIR}/travis-build-osx.sh"
-esac
+run_autoreconf() {
+    if [ -d /usr/local/share/aclocal ]; then
+        autoreconf -isv -I/usr/local/share/aclocal
+    else
+        autoreconf -isv
+    fi
+}
 
 do_apidocs() {
     run_autoreconf || return 1
     ./configure --with-doxygen || return 1
     make check-api-docs
+}
+
+do_distcheck() {
+    run_autoreconf || return 1
+    ./configure || return 1
+
+    sudo sysctl "kern.corefile=core.%p"
+
+    cat >kyua.conf <<EOF
+syntax(2)
+
+-- We do not know how many CPUs the test machine has.  However, parallelizing
+-- the execution of our tests to _any_ degree speeds up the time it takes to
+-- complete a test run because many of our tests are blocking.
+parallelism = 4
+EOF
+    [ "${UNPRIVILEGED_USER:-no}" = no ] || \
+        echo "unprivileged_user = 'travis'" >>kyua.conf
+
+
+    case "${TRAVIS_COMPILER}" in
+    clang)
+        clang_version=6
+        export PATH="/usr/local/opt/llvm@${clang_version}/bin:$PATH"
+        ;;
+    gcc)
+        gcc_version=7
+        export CC=gcc-${gcc_version}
+        export CXX=g++-${gcc_version}
+        ;;
+    esac
+
+    local f=
+    f="${f} CC='${CC}'"
+    f="${f} CPPFLAGS='-I/usr/local/include'"
+    f="${f} CXX='${CXX}'"
+    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
+    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
+    f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
+    if [ "${AS_ROOT:-no}" = yes ]; then
+        sudo -H PATH="${PATH}" make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+    else
+        make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+    fi
 }
 
 do_style() {
@@ -52,15 +94,3 @@ do_style() {
     ../configure || return 1
     make check-style
 }
-
-main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
-        exit 1
-    fi
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
-}
-
-main "${@}"

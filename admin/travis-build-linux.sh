@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 The Kyua Authors.
+# Copyright 2019 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,38 +29,40 @@
 
 set -e -x
 
-BINDIR="$(dirname "$0")"
-
-case "${TRAVIS_OS_NAME}" in
-linux)
-    . "${BINDIR}/travis-build-linux.sh"
-    ;;
-osx)
-    . "${BINDIR}/travis-build-osx.sh"
-esac
-
-do_apidocs() {
-    run_autoreconf || return 1
-    ./configure --with-doxygen || return 1
-    make check-api-docs
+run_autoreconf() {
+    autoreconf -isv
 }
 
-do_style() {
+do_distcheck() {
     run_autoreconf || return 1
-    mkdir build
-    cd build
-    ../configure || return 1
-    make check-style
-}
+    ./configure || return 1
 
-main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
-        exit 1
+    sudo sysctl -w "kernel.core_pattern=core.%p"
+
+    local archflags=
+    [ "${ARCH?}" != i386 ] || archflags=-m32
+
+    cat >kyua.conf <<EOF
+syntax(2)
+
+-- We do not know how many CPUs the test machine has.  However, parallelizing
+-- the execution of our tests to _any_ degree speeds up the time it takes to
+-- complete a test run because many of our tests are blocking.
+parallelism = 4
+EOF
+    [ "${UNPRIVILEGED_USER:-no}" = no ] || \
+        echo "unprivileged_user = 'travis'" >>kyua.conf
+
+    local f=
+    f="${f} CFLAGS='${archflags}'"
+    f="${f} CPPFLAGS='-I/usr/local/include'"
+    f="${f} CXXFLAGS='${archflags}'"
+    f="${f} LDFLAGS='-L/usr/local/lib -Wl,-R/usr/local/lib'"
+    f="${f} PKG_CONFIG_PATH='/usr/local/lib/pkgconfig'"
+    f="${f} KYUA_CONFIG_FILE_FOR_CHECK=$(pwd)/kyua.conf"
+    if [ "${AS_ROOT:-no}" = yes ]; then
+        sudo -H PATH="${PATH}" make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
+    else
+        make distcheck DISTCHECK_CONFIGURE_FLAGS="${f}"
     fi
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
 }
-
-main "${@}"

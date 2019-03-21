@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 The Kyua Authors.
+# Copyright 2019 The Kyua Authors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,49 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set -e -x
+install_package() {
+    sudo apt-get install -y "${@}"
+}
 
-BINDIR="$(dirname "$0")"
+install_deps() {
+    local pkgsuffix=
+    local packages=
 
-case "${TRAVIS_OS_NAME}" in
-linux)
-    . "${BINDIR}/travis-build-linux.sh"
-    ;;
-osx)
-    . "${BINDIR}/travis-build-osx.sh"
-esac
+    case "${TRAVIS_COMPILER}" in
+    gcc)
+        if [ "${ARCH?}" = i386 ]; then
+            pkgsuffix=:i386
+            packages="${packages} gcc-multilib"
+            packages="${packages} g++-multilib"
+            sudo dpkg --add-architecture i386
+        fi
+        ;;
+    esac
+
+    packages="${packages} gdb"
+    packages="${packages} liblua5.2-0${pkgsuffix}"
+    packages="${packages} liblua5.2-dev${pkgsuffix}"
+    packages="${packages} libsqlite3-0${pkgsuffix}"
+    packages="${packages} libsqlite3-dev${pkgsuffix}"
+    packages="${packages} pkg-config${pkgsuffix}"
+    packages="${packages} sqlite3"
+    sudo apt-get update -qq
+    install_package ${packages}
+
+    local name="20190321-usr-local-kyua-ubuntu-16-04-${ARCH?}-${CC?}.tar.gz"
+    wget -O "${name}" "http://dl.bintray.com/ngie-eign/kyua/${name}" || return 1
+    sudo tar -xzvp -C / -f "${name}"
+    rm -f "${name}"
+}
 
 do_apidocs() {
-    run_autoreconf || return 1
-    ./configure --with-doxygen || return 1
-    make check-api-docs
+    install_package doxygen
+}
+
+do_distcheck() {
+    :
 }
 
 do_style() {
-    run_autoreconf || return 1
-    mkdir build
-    cd build
-    ../configure || return 1
-    make check-style
+    :
 }
-
-main() {
-    if [ -z "${DO}" ]; then
-        echo "DO must be defined" 1>&2
-        exit 1
-    fi
-    for step in ${DO}; do
-        "do_${DO}" || exit 1
-    done
-}
-
-main "${@}"

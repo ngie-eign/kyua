@@ -29,44 +29,16 @@
 
 set -e -x
 
-install_deps() {
-    local pkgsuffix=
-    local packages=
-    if [ "${ARCH?}" = i386 ]; then
-         pkgsuffix=:i386
-         packages="${packages} gcc-multilib"
-         packages="${packages} g++-multilib"
-         sudo dpkg --add-architecture i386
-    fi
-    packages="${packages} gdb"
-    packages="${packages} liblua5.2-0${pkgsuffix}"
-    packages="${packages} liblua5.2-dev${pkgsuffix}"
-    packages="${packages} libsqlite3-0${pkgsuffix}"
-    packages="${packages} libsqlite3-dev${pkgsuffix}"
-    packages="${packages} pkg-config${pkgsuffix}"
-    packages="${packages} sqlite3"
-    sudo apt-get update -qq
-    sudo apt-get install -y ${packages}
-}
+BINDIR="$(dirname "$0")"
 
-install_kyua() {
-    local name="20190321-usr-local-kyua-ubuntu-16-04-${ARCH?}-${CC?}.tar.gz"
-    wget -O "${name}" "http://dl.bintray.com/ngie-eign/kyua/${name}" || return 1
-    sudo tar -xzvp -C / -f "${name}"
-    rm -f "${name}"
-}
-
-do_apidocs() {
-    sudo apt-get install -y doxygen
-}
-
-do_distcheck() {
-    :
-}
-
-do_style() {
-    :
-}
+case "${TRAVIS_OS_NAME}" in
+linux)
+    . "${BINDIR}/travis-install-deps-linux.sh"
+    ;;
+osx)
+    . "${BINDIR}/travis-install-deps-osx.sh"
+    ;;
+esac
 
 main() {
     if [ -z "${DO}" ]; then
@@ -74,7 +46,6 @@ main() {
         exit 1
     fi
     install_deps
-    install_kyua
     for step in ${DO}; do
         "do_${DO}" || exit 1
     done
