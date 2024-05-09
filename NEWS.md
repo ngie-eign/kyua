@@ -4,8 +4,14 @@
 
 **NOT RELEASED YET; STILL UNDER DEVELOPMENT.**
 
-* Explicitly require C++11 language features when compiling Kyua.
+**Released on December XX, 2024.**
 
+* Fix building Kyua on recent versions of MacOS.
+* Explicitly require C++11 language features when compiling Kyua.
+* Improve IllumOS/Solaris compatibility.
+* Address time skew issue with reporting algorithm.
+* Make testcases more robust in light in certain environments.
+* Add Cirrus CI and Travis CI integration.
 
 ## Changes in version 0.13
 
