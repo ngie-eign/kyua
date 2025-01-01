@@ -3,23 +3,26 @@ env:
 
 task:
   matrix:
-    - name: 14.0-RELEASE
+    - name: 15.0-CURRENT
       freebsd_instance:
-        image_family: freebsd-14-0
-    - name: 14.0-STABLE
+        image_family: freebsd-15-0-snap
+    - name: 14-STABLE
       freebsd_instance:
-        image_family: freebsd-14-0-snap
-    - name: 13.2-RELEASE
+        image_family: freebsd-14-2-snap
+    - name: 14.2-RELEASE
       freebsd_instance:
-        image_family: freebsd-13-2
-    - name: 13.2-STABLE
+        image_family: freebsd-14-2
+    - name: 13-STABLE
       freebsd_instance:
-        image_family: freebsd-13-2-snap
+        image_family: freebsd-13-4-snap
+    - name: 13.4-RELEASE
+      freebsd_instance:
+        image_family: freebsd-13-4
   env:
     DO: distcheck
   install_script:
     - sed -i.bak -e 's,pkg+http://pkg.FreeBSD.org/\${ABI}/quarterly,pkg+http://pkg.FreeBSD.org/\${ABI}/latest,' /etc/pkg/FreeBSD.conf
     - ASSUME_ALWAYS_YES=yes pkg bootstrap -f
-    - pkg install -y autoconf automake atf lutok pkgconf sqlite3
+    - pkg install -y autoconf automake libtool m4 pkgconf sqlite3
   script:
-    - ./admin/travis-build.sh
+    - ./admin/ci-build.sh
