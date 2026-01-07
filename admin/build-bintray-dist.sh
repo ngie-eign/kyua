@@ -118,8 +118,8 @@ main() {
     mkdir /usr/local
 
     install_deps
-    install_from_github atf 0.21
-    install_from_github lutok 0.4
+    install_from_github atf 0.22
+    install_from_github lutok 0.5
     install_from_github kyua 0.13
 
     local version="$(lsb_release -rs | cut -d . -f 1-2 | tr . -)"
