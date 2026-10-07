@@ -56,7 +56,9 @@ extern "C" {
 #include "cli/common.ipp"
 #include "cli/config.hpp"
 #include "engine/atf.hpp"
+#if defined(HAVE_GOOGLETEST)
 #include "engine/googletest.hpp"
+#endif
 #include "engine/plain.hpp"
 #include "engine/scheduler.hpp"
 #include "engine/tap.hpp"
@@ -103,9 +105,11 @@ register_scheduler_interfaces(void)
     scheduler::register_interface(
         "atf", std::shared_ptr< scheduler::interface >(
             new engine::atf_interface()));
+#if defined(HAVE_GOOGLETEST)
     scheduler::register_interface(
         "googletest", std::shared_ptr< scheduler::interface >(
             new engine::googletest_interface()));
+#endif
     scheduler::register_interface(
         "plain", std::shared_ptr< scheduler::interface >(
             new engine::plain_interface()));

@@ -49,13 +49,6 @@ libengine_la_SOURCES += engine/exceptions.hpp
 libengine_la_SOURCES += engine/filters.cpp
 libengine_la_SOURCES += engine/filters.hpp
 libengine_la_SOURCES += engine/filters_fwd.hpp
-libengine_la_SOURCES += engine/googletest.cpp
-libengine_la_SOURCES += engine/googletest.hpp
-libengine_la_SOURCES += engine/googletest_list.cpp
-libengine_la_SOURCES += engine/googletest_list.hpp
-libengine_la_SOURCES += engine/googletest_result.cpp
-libengine_la_SOURCES += engine/googletest_result.hpp
-libengine_la_SOURCES += engine/googletest_result_fwd.hpp
 libengine_la_SOURCES += engine/kyuafile.cpp
 libengine_la_SOURCES += engine/kyuafile.hpp
 libengine_la_SOURCES += engine/kyuafile_fwd.hpp
@@ -80,6 +73,20 @@ tests_enginedir = $(pkgtestsdir)/engine
 
 tests_engine_DATA = engine/Kyuafile
 EXTRA_DIST += $(tests_engine_DATA)
+DISTCLEANFILES += engine/Kyuafile.tmp engine/Kyuafile
+
+engine/Kyuafile: engine/Kyuafile.in
+	cp -f engine/Kyuafile.in engine/Kyuafile.tmp
+if WITH_GOOGLETEST
+	while IFS="\n" read t; do \
+	    echo 'atf_test_program{name="$$t"}'; \
+	done >> engine/Kyuafile.tmp <<-EOF
+	googletest_test
+	googletest_list_test
+	googletest_result_test
+	EOF
+endif
+	mv -f engine/Kyuafile.tmp engine/Kyuafile
 
 tests_engine_PROGRAMS = engine/atf_helpers
 engine_atf_helpers_SOURCES = engine/atf_helpers.cpp
@@ -116,6 +123,7 @@ engine_filters_test_SOURCES = engine/filters_test.cpp
 engine_filters_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_filters_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
 
+if WITH_GOOGLETEST
 tests_engine_PROGRAMS += engine/googletest_helpers
 engine_googletest_helpers_SOURCES = engine/googletest_helpers.cpp
 engine_googletest_helpers_CXXFLAGS = $(UTILS_CFLAGS) $(ATF_CXX_CFLAGS)
@@ -182,6 +190,16 @@ tests_engine_PROGRAMS += engine/scheduler_test
 engine_scheduler_test_SOURCES = engine/scheduler_test.cpp
 engine_scheduler_test_CXXFLAGS = $(ENGINE_CFLAGS) $(ATF_CXX_CFLAGS)
 engine_scheduler_test_LDADD = $(ENGINE_LIBS) $(ATF_CXX_LIBS)
+endif
+
+if WITH_GOOGLETEST
+libengine_la_SOURCES += engine/googletest.cpp
+libengine_la_SOURCES += engine/googletest.hpp
+libengine_la_SOURCES += engine/googletest_list.cpp
+libengine_la_SOURCES += engine/googletest_list.hpp
+libengine_la_SOURCES += engine/googletest_result.cpp
+libengine_la_SOURCES += engine/googletest_result.hpp
+libengine_la_SOURCES += engine/googletest_result_fwd.hpp
 endif
 
 include engine/execenv/Makefile.am.inc

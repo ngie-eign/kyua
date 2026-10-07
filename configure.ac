@@ -74,6 +74,16 @@ if test ${enable_code_coverage} = yes; then
 fi
 AM_CONDITIONAL([CODE_COVERAGE], [test "${enable_code_coverage}" = yes])
 
+AC_ARG_ENABLE([googletest],
+AS_HELP_STRING([--enable-googletest],
+[Build the GoogleTest driver and the GoogleTest-based tests]),,
+[enable_googletest=no])
+
+if test ${enable_googletest} == yes; then
+    AC_MSG_NOTICE([building with GoogleTest support on])
+fi
+AM_CONDITIONAL([GOOGLETEST], [test "${enable_googletest}" = yes])
+
 AC_ARG_ENABLE([lsan],
 AS_HELP_STRING([--enable-lsan], [Turn on LeakSanitizer]),,
 [enable_lsan=no])

@@ -87,4 +87,12 @@ integration_helpers_simple_some_fail_SOURCES = \
     integration/helpers/simple_some_fail.cpp
 integration_helpers_simple_some_fail_CXXFLAGS = $(ATF_CXX_CFLAGS)
 integration_helpers_simple_some_fail_LDADD = $(ATF_CXX_LIBS)
+
+if WITH_GOOGLETEST
+tests_integration_helpers_PROGRAMS += integration/helpers/googletest_helper
+integration_helpers_metadata_SOURCES = integration/helpers/googletest_helper.cpp
+integration_helpers_metadata_CXXFLAGS = $(GOOGLETEST_CXX_CFLAGS)
+integration_helpers_metadata_LDADD = $(GOOGLETEST_CXX_LIBS)
+endif
+
 endif
