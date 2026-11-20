@@ -9,6 +9,13 @@
 #     * Install
 #     * Run tests
 #
+# On FreeBSD we build with:
+# * latest clang from ports
+#     * The sanitizer libs for the base system compiler are installed in the
+#       wrong directory:
+#       https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=297510 .
+# * ld from system
+#
 # On MacOS we build with:
 # * latest clang from brew (system provided clang lacks sanitizers).
 # * ld from system
@@ -32,19 +39,19 @@ permissions:
 
 jobs:
     build-and-test:
-        # yamllint disable-line rule:line-length
+        # yamllint disable rule:line-length
         name: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
         env:
-            AR: ${{ matrix.llvm-bindir }}/llvm-ar
-            CC: ${{ matrix.llvm-bindir }}/clang
-            CPP: ${{ matrix.llvm-bindir }}/clang-cpp
-            CXX: ${{ matrix.llvm-bindir }}/clang++
-            NM: ${{ matrix.llvm-bindir }}/llvm-nm
-            OBJDUMP: ${{ matrix.llvm-bindir }}/llvm-objdump
-            RANLIB: ${{ matrix.llvm-bindir }}/llvm-ranlib
-            STRIP: ${{ matrix.llvm-bindir }}/llvm-strip
-            ATF_SRCDIR: ${{ github.workspace }}/atf-src
-            ATF_OBJDIR: ${{ github.workspace }}/atf-obj
+            AR: ${{ matrix.compiler-bindir }}/llvm-ar
+            CC: ${{ matrix.compiler-bindir }}/clang
+            CPP: ${{ matrix.compiler-bindir }}/clang-cpp
+            CXX: ${{ matrix.compiler-bindir }}/clang++
+            NM: ${{ matrix.compiler-bindir }}/llvm-nm
+            OBJDUMP: ${{ matrix.compiler-bindir }}/llvm-objdump
+            RANLIB: ${{ matrix.compiler-bindir }}/llvm-ranlib
+            STRIP: ${{ matrix.compiler-bindir }}/llvm-strip
+            ATF_SRCDIR: ${{ github.workspace }}/src
+            ATF_OBJDIR: ${{ github.workspace }}/obj
             KYUA_PREFIX: ${{ github.workspace }}/root
             KYUA_SRCDIR: ${{ github.workspace }}/kyua-src
             KYUA_OBJDIR: ${{ github.workspace }}/kyua-obj
@@ -52,6 +59,7 @@ jobs:
             LUTOK_OBJDIR: ${{ github.workspace }}/lutok-obj
             # yamllint disable-line rule:line-length
             JOB_NAME: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
+        # yamllint enable rule:line-length
         runs-on: "${{ matrix.build-os }}"
         strategy:
             fail-fast: false
@@ -85,7 +93,7 @@ jobs:
                           - lutok
                           - pkgconf
                           - sqlite
-                      llvm-bindir: /opt/homebrew/opt/llvm@22/bin
+                      compiler-bindir: /opt/homebrew/opt/llvm@22/bin
                       build-dependencies-from-source: false
                     - build-os: ubuntu-latest
                       compiler: clang-22
@@ -100,7 +108,7 @@ jobs:
                           - liblua5.4-dev
                           - pkgconf
                           - libsqlite3-dev
-                      llvm-bindir: /usr/lib/llvm-22/bin
+                      compiler-bindir: /usr/lib/llvm-22/bin
                       build-dependencies-from-source: true
                 sanitize:
                     - ""
@@ -250,19 +258,19 @@ jobs:
               if: ${{ ! cancelled() }}
 
     build-and-test-freebsd:
-        # yamllint disable-line rule:line-length
+        # yamllint disable rule:line-length
         name: FreeBSD ${{ matrix.release }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
         env:
-            AR: ${{ matrix.llvm-bindir }}/llvm-ar
-            CC: ${{ matrix.llvm-bindir }}/clang
-            CPP: ${{ matrix.llvm-bindir }}/clang-cpp
-            CXX: ${{ matrix.llvm-bindir }}/clang++
-            NM: ${{ matrix.llvm-bindir }}/llvm-nm
-            OBJDUMP: ${{ matrix.llvm-bindir }}/llvm-objdump
-            RANLIB: ${{ matrix.llvm-bindir }}/llvm-ranlib
-            STRIP: ${{ matrix.llvm-bindir }}/llvm-strip
-            ATF_SRCDIR: ${{ github.workspace }}/atf-src
-            ATF_OBJDIR: ${{ github.workspace }}/atf-obj
+            AR: ${{ matrix.compiler-bindir }}/llvm-ar${{ matrix.compiler-suffix }}
+            CC: ${{ matrix.compiler-bindir }}/clang${{ matrix.compiler-suffix }}
+            CPP: ${{ matrix.compiler-bindir }}/clang-cpp${{ matrix.compiler-suffix }}
+            CXX: ${{ matrix.compiler-bindir }}/clang++${{ matrix.compiler-suffix }}
+            NM: ${{ matrix.compiler-bindir }}/llvm-nm${{ matrix.compiler-suffix }}
+            OBJDUMP: ${{ matrix.compiler-bindir }}/llvm-objdump${{ matrix.compiler-suffix }}
+            RANLIB: ${{ matrix.compiler-bindir }}/llvm-ranlib${{ matrix.compiler-suffix }}
+            STRIP: ${{ matrix.compiler-bindir }}/llvm-strip${{ matrix.compiler-suffix }}
+            ATF_SRCDIR: ${{ github.workspace }}/src
+            ATF_OBJDIR: ${{ github.workspace }}/obj
             KYUA_PREFIX: ${{ github.workspace }}/root
             KYUA_SRCDIR: ${{ github.workspace }}/kyua-src
             KYUA_OBJDIR: ${{ github.workspace }}/kyua-obj
@@ -270,6 +278,7 @@ jobs:
             LUTOK_OBJDIR: ${{ github.workspace }}/lutok-obj
             # yamllint disable-line rule:line-length
             JOB_NAME: FreeBSD ${{ matrix.release }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
+        # yamllint enable rule:line-length
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
@@ -301,8 +310,8 @@ jobs:
                     - release: 14.4
                       build-dependencies-from-source: true
                       compiler: clang-22
-                      llvm-bindir: /usr/local/llvm22/bin
-                      llvm-version: 22
+                      compiler-bindir: /usr/local/bin
+                      compiler-suffix: 22
                       pkgs:
                           - autoconf
                           - automake
@@ -318,8 +327,8 @@ jobs:
                     - release: 15.1
                       build-dependencies-from-source: true
                       compiler: clang-22
-                      llvm-bindir: /usr/local/llvm22/bin
-                      llvm-version: 22
+                      compiler-bindir: /usr/local/bin
+                      compiler-suffix: 22
                       pkgs:
                           - autoconf
                           - automake
@@ -365,7 +374,8 @@ jobs:
                   echo "uname -p: $(uname -p)"
 
             - name: Start FreeBSD ${{ matrix.release }} VM
-              uses: vmactions/freebsd-vm@e9ea2cef1135a17c880e9ed9956c983d58421ece # v1.5.3
+              # yamllint disable-line rule:line-length
+              uses: vmactions/freebsd-vm@e9ea2cef1135a17c880e9ed9956c983d58421ece  # v1.5.3
               with:
                   envs: 'ATF_SRCDIR KYUA_SRCDIR LUTOK_SRCDIR AR CC CPP CXX NM OBJDUMP RANLIB STRIP JOB_NAME'
                   prepare: |
