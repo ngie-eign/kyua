@@ -40,16 +40,16 @@ permissions:
 jobs:
     build-and-test:
         # yamllint disable rule:line-length
-        name: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
+        name: ${{ matrix.os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
         env:
-            AR: ${{ matrix.compiler-bindir }}/llvm-ar
-            CC: ${{ matrix.compiler-bindir }}/clang
-            CPP: ${{ matrix.compiler-bindir }}/clang-cpp
-            CXX: ${{ matrix.compiler-bindir }}/clang++
-            NM: ${{ matrix.compiler-bindir }}/llvm-nm
-            OBJDUMP: ${{ matrix.compiler-bindir }}/llvm-objdump
-            RANLIB: ${{ matrix.compiler-bindir }}/llvm-ranlib
-            STRIP: ${{ matrix.compiler-bindir }}/llvm-strip
+            AR: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.ar }}
+            CC: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.cc }}
+            CPP: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.cpp }}
+            CXX: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.cxx }}
+            NM: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.nm }}
+            OBJDUMP: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.objdump }}
+            RANLIB: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.ranlib }}
+            STRIP: ${{ matrix.toolchain.bindir }}/${{ matrix.toolchain.strip }}
             ATF_SRCDIR: ${{ github.workspace }}/atf-src
             ATF_OBJDIR: ${{ github.workspace }}/atf-obj
             KYUA_PREFIX: ${{ github.workspace }}/root
@@ -57,29 +57,31 @@ jobs:
             KYUA_OBJDIR: ${{ github.workspace }}/kyua-obj
             LUTOK_SRCDIR: ${{ github.workspace }}/lutok-src
             LUTOK_OBJDIR: ${{ github.workspace }}/lutok-obj
-            JOB_NAME: ${{ matrix.build-os }} ${{ matrix.compiler }} ${{ join(matrix.sanitize, '+') }}
+            JOB_NAME: ${{ matrix.os }} ${{ matrix.toolchain.compiler }} ${{ join(matrix.sanitize, '+') }}
         # yamllint enable rule:line-length
-        runs-on: "${{ matrix.build-os }}"
+        runs-on: "${{ matrix.os }}"
         strategy:
             fail-fast: false
             matrix:
-                build-os:
+                os:
                     - macos-latest
+                    - ubuntu-24.04
                     - ubuntu-26.04
                 include:
                     # The macOS runner uses a homebrew provided compiler as the
                     # system compiler lacks ASAN/LSAN/UBSAN support.
-                    - build-os: macos-latest
-                      compiler: clang-22
-                      env:
-                          # The coredump tests cause the macOS runner to
-                          # frequently timeout/fail due to ENOSPC issues. Skip
-                          # the tests until all of the issues can be worked
-                          # out.
-                          #
-                          # See this issue for more details:
-                          # https://github.com/actions/runner-images/issues/14678
-                          - RUN_COREDUMP_TESTS: false
+                    - os: macos-latest
+                      toolchain:
+                          compiler: clang-22
+                          bindir: /opt/homebrew/opt/llvm@22/bin
+                          ar: llvm-ar
+                          cc: clang
+                          cpp: clang-cpp
+                          cxx: clang++
+                          nm: llvm-nm
+                          objdump: llvm-objdump
+                          ranlib: llvm-ranlib
+                          strip: llvm-strip
                       pkgs:
                           - atf
                           - autoconf
@@ -92,12 +94,49 @@ jobs:
                           - lutok
                           - pkgconf
                           - sqlite
-                      compiler-bindir: /opt/homebrew/opt/llvm@22/bin
                       build-dependencies-from-source: false
-                    - build-os: ubuntu-26.04
-                      compiler: clang-22
-                      env:
-                          - RUN_COREDUMP_TESTS: true
+                      # The coredump tests cause the macOS runner to frequently
+                      # timeout/fail due to ENOSPC issues. Skip the tests until
+                      # all of the issues can be worked out.
+                      #
+                      # See this issue for more details:
+                      # https://github.com/actions/runner-images/issues/14678
+                      run_coredump_tests: false
+                    - os: ubuntu-24.04
+                      toolchain:
+                          compiler: gcc-14
+                          bindir: /usr/bin
+                          ar: gcc-ar-14
+                          cc: gcc-14
+                          cpp: cpp-14
+                          cxx: g++-14
+                          nm: gcc-nm-14
+                          objdump: objdump
+                          ranlib: gcc-ranlib-14
+                          strip: gcc-strip-14
+                      pkgs:
+                          - autoconf
+                          - automake
+                          - gcc-14
+                          - libtool
+                          - lua5.4
+                          - liblua5.4-dev
+                          - pkgconf
+                          - libsqlite3-dev
+                      build-dependencies-from-source: true
+                      run_coredump_tests: true
+                    - os: ubuntu-26.04
+                      toolchain:
+                          compiler: clang-22
+                          bindir: /usr/lib/llvm-22/bin
+                          ar: llvm-ar
+                          cc: clang
+                          cpp: clang-cpp
+                          cxx: clang++
+                          nm: llvm-nm
+                          objdump: llvm-objdump
+                          ranlib: llvm-ranlib
+                          strip: llvm-strip
                       pkgs:
                           - autoconf
                           - automake
@@ -107,8 +146,8 @@ jobs:
                           - liblua5.4-dev
                           - pkgconf
                           - libsqlite3-dev
-                      compiler-bindir: /usr/lib/llvm-22/bin
                       build-dependencies-from-source: true
+                      run_coredump_tests: true
                 sanitize:
                     - ""
                     # TODO(ngie,77): tests currently fail when these options
@@ -157,6 +196,7 @@ jobs:
                   echo "uname -a: $(uname -a)"
                   echo "uname -m: $(uname -m)"
                   echo "uname -p: $(uname -p)"
+                  env
 
             - name: Distcheck Environment Setup (common)
               run: |
@@ -217,7 +257,7 @@ jobs:
 
                   # export AS_ROOT=yes
                   # export UNPRIVILEGED_USER=yes
-                  export RUN_COREDUMP_TESTS="${{ env.RUN_COREDUMP_TESTS }}"
+                  export RUN_COREDUMP_TESTS="${{ matrix.run_coredump_tests }}"
 
                   cd "${KYUA_SRCDIR}"
                   env "EXTRA_DISTCHECK_CONFIGURE_ARGS=${CFG_ARGS}" \
